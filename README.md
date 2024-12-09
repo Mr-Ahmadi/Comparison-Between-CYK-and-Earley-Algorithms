@@ -1,7 +1,7 @@
 
 ---
 
-# Comparison Between CYK and Earley Parsing Algorithms
+# Comparison Between CYK and Earley Algorithms
 
 ## Overview
 
