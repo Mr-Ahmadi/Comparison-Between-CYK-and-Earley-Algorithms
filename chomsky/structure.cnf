@@ -1,0 +1,10 @@
+S -> L S
+S -> DM dr
+F -> DM dr
+F -> L S
+L -> DM dr
+DM -> dl F
+S -> s
+L -> s
+dl -> d
+dr -> d
