@@ -91,6 +91,6 @@ The parsing times reflect the processing duration of each algorithm under contro
 
 The benchmark shows that while the CYK parser is constrained to CNF and may be slower, the Earley parser provides greater flexibility by supporting general grammars and achieving faster parsing times for this example.
 
-For more information on extending or modifying the code, refer to the code comments and detailed documentation within each Python class.
+For more information on extending or modifying the code, refer to the code comments within each Python class.
 
 --- 

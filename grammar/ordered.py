@@ -1,19 +1,20 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import time
-import json  # Added for reading JSON files
+import json  # Added for reading and writing JSON files
 
 class Ordered:
     def __init__(self, define_rules=None, probabilities=None, filename=None):
+        # Initialize grammar rules and probabilities, either from parameters or a JSON file
         if filename:
             self.define_rules, self.probabilities = self.load_grammar(filename)
         else:
             self.define_rules = define_rules
             self.probabilities = probabilities
 
+        # Initialize the chart data structure for parsing
         self.charts = []
 
-    # Save grammar and probabilities to a JSON file
+    # Save grammar rules and probabilities to a JSON file
     def save_grammar(self, filename):
         data = {
             "define_rules": self.define_rules,
@@ -22,13 +23,16 @@ class Ordered:
         with open(filename, "w") as file:
             json.dump(data, file, indent=4)
 
+    # Load grammar rules and probabilities from a JSON file
     def load_grammar(self, filename):
         with open(filename, "r") as file:
             data = json.load(file)
         return data["define_rules"], data["probabilities"]
-    
+
+    # Predictor operation: adds new rules to the chart based on grammar rules
     def predictor(self, rule, state):
         current_symbol = rule["rhs"][rule["dot"]]
+        # Check if the symbol is a non-terminal
         if current_symbol.isupper():
             return [{
                 "lhs": current_symbol,
@@ -42,8 +46,10 @@ class Ordered:
             } for i, rhs in enumerate(self.define_rules[current_symbol])]
         return []
 
+    # Scanner operation: matches terminal symbols in the input
     def scanner(self, rule, next_input):
         current_symbol = rule["rhs"][rule["dot"]]
+        # Check if the current symbol is a terminal and matches the next input
         if current_symbol.islower() and next_input in self.define_rules[current_symbol]:
             return [{
                 "lhs": current_symbol,
@@ -57,6 +63,7 @@ class Ordered:
             }]
         return []
 
+    # Completor operation: updates existing rules in the chart
     def completor(self, rule):
         return [
             {
@@ -73,6 +80,7 @@ class Ordered:
             if r["dot"] < len(r["rhs"]) and r["rhs"][r["dot"]] == rule["lhs"]
         ]
 
+    # Implements the Earley parsing algorithm
     def early_parser(self, sentence: str):
         input_arr = sentence.split() + [""]
         # Initialize the chart with the initial state
@@ -87,7 +95,7 @@ class Ordered:
             "probability": 1.0
         }]]
 
-        # Parsing process
+        # Iterate through each position in the input sentence
         for curr_state in range(len(input_arr)):
             curr_chart = self.charts[curr_state]
             next_chart = []
@@ -113,30 +121,27 @@ class Ordered:
 
         return self.charts
 
+    # Recursively adds nodes and edges to the graph for visualization
     def add_nodes_and_edges(self, graph, node, parent=None, depth=0):
-        # Define a unique name for each node based on its attributes
-        node_name = (node['lhs'], (node['state'], node['end']))
+        node_name = (node['lhs'], (node['state'], node['end']))  # Unique identifier for each node
         graph.add_node(node_name, probability=node.get("probability", 1), layer=depth)
         
         if parent:
-            # Add edge from parent to current node
-            graph.add_edge(parent, node_name)
+            graph.add_edge(parent, node_name)  # Add edge from parent to current node
 
-        # Recursively add child nodes
         for child in node.get('completor', []):
             self.add_nodes_and_edges(graph, child, parent=node_name, depth=depth + 1)
 
+    # Build and visualize the parse tree
     def build_tree(self):
         roots = [r for r in self.charts[-2] if r["lhs"] == "ROOT" and r["dot"] == len(r["rhs"])]
         roots = sorted(roots, key=lambda root: root["probability"], reverse=True)
         root = roots[0]
         
-        print(f"Prob: {root["probability"]}")
-        # Create a directed graph
-        graph = nx.DiGraph()
+        print(f"Prob: {root['probability']}")  # Display the probability of the chosen parse
+        graph = nx.DiGraph()  # Create a directed graph
 
-        # Add nodes and edges to the graph
-        self.add_nodes_and_edges(graph, root)
+        self.add_nodes_and_edges(graph, root)  # Add nodes and edges to the graph
 
         # Generate labels for visualization
         mapping = {node: node[0] for node in graph.nodes}
